@@ -1,0 +1,257 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ProductsGroups {
+  id            String    @id @default(uuid())
+  group_name    String
+  products_list Product[]
+}
+
+model Product {
+  id               String          @id @default(uuid())
+  image            String
+  imageId          String
+  route            String          @unique
+  name             String
+  link             String
+  summary          String
+  whatsapp         String
+  description      String
+  ProductsGroups   ProductsGroups? @relation(fields: [productsGroupsId], references: [id])
+  productsGroupsId String?
+}
+
+model Suppliers {
+  id    String @id @default(uuid())
+  image String
+  name  String
+  index Int?
+}
+
+model Clients {
+  id    String @id @default(uuid())
+  image String
+  name  String
+  index Int?
+}
+
+model HomeMain {
+  id          String  @id @default(uuid())
+  title       String
+  text        String
+  button_text String
+  button_link String
+  image       String
+  imageId     String
+  enable      Boolean @default(true)
+  Home        Home[]
+}
+
+model WelcomeMain {
+  id String @id @default(uuid())
+
+  title       String
+  title_color String
+  text        String
+  button_text String
+  button_link String
+  image       String
+  imageId     String
+  enable      Boolean @default(true)
+  Home        Home[]
+}
+
+model CatalogMain {
+  id          String  @id @default(uuid())
+  title       String
+  text        String
+  button_text String
+  button_link String
+  image       String
+  imageId     String
+  enable      Boolean @default(true)
+  Home        Home[]
+}
+
+model HomeProductsList {
+  id             String        @id @default(uuid())
+  name           String
+  HomeProducts   HomeProducts? @relation(fields: [homeProductsId], references: [id])
+  homeProductsId String?
+}
+
+model HomeProducts {
+  id          String  @id @default(uuid())
+  title       String?
+  image       String?
+  imageId     String?
+  button_text String?
+  button_link String?
+  enable      Boolean @default(true)
+
+  products_list HomeProductsList[]
+  Home          Home[]
+}
+
+model Home {
+  id String @id @default(uuid())
+
+  main       HomeMain? @relation(fields: [homeMainId], references: [id])
+  homeMainId String?
+
+  welcome       WelcomeMain? @relation(fields: [welcomeMainId], references: [id])
+  welcomeMainId String?
+
+  products       HomeProducts? @relation(fields: [homeProductsId], references: [id])
+  homeProductsId String?
+
+  catalog       CatalogMain? @relation(fields: [catalogMainId], references: [id])
+  catalogMainId String?
+}
+
+model SuppliersScreen {
+  id            String  @id @default(uuid())
+  title         String
+  text          String
+  secound_title String
+  image         String
+  imageId       String
+  enable        Boolean @default(true)
+}
+
+model AboutUsBanners {
+  id      String @id @default(uuid())
+  image   String
+  imageId String @unique
+
+  AboutUs   AboutUs? @relation(fields: [aboutUsId], references: [id])
+  aboutUsId String?
+}
+
+model AboutUsHistory {
+  id     String  @id @default(uuid())
+  title  String
+  text   String
+  enable Boolean @default(true)
+
+  AboutUs AboutUs[]
+}
+
+model AboutUsTeam {
+  id      String  @id @default(uuid())
+  title   String
+  text    String
+  image   String
+  imageId String  @unique
+  enable  Boolean @default(true)
+
+  AboutUs AboutUs[]
+}
+
+model AboutUsSpaceimages {
+  id      String @id @default(uuid())
+  image   String
+  imageId String @unique
+
+  AboutUsSpace   AboutUsSpace? @relation(fields: [aboutUsSpaceId], references: [id])
+  aboutUsSpaceId String?
+}
+
+model AboutUsSpace {
+  id     String  @id @default(uuid())
+  title  String?
+  text   String?
+  enable Boolean @default(true)
+
+  images  AboutUsSpaceimages[]
+  AboutUs AboutUs[]
+}
+
+model AboutUsValues {
+  id      String  @id @default(uuid())
+  image   String
+  imageId String
+  title   String
+  text    String
+  enable  Boolean @default(true)
+
+  AboutUs   AboutUs? @relation(fields: [aboutUsId], references: [id])
+  aboutUsId String?
+}
+
+model AboutUsDirectors {
+  id      String  @id @default(uuid())
+  title   String
+  text    String
+  image   String
+  imageId String
+  enable  Boolean @default(true)
+
+  AboutUs   AboutUs? @relation(fields: [aboutUsId], references: [id])
+  aboutUsId String?
+}
+
+model AboutUs {
+  id String @id @default(uuid())
+
+  banners AboutUsBanners[]
+
+  history          AboutUsHistory? @relation(fields: [aboutUsHistoryId], references: [id])
+  aboutUsHistoryId String?
+
+  team          AboutUsTeam? @relation(fields: [aboutUsTeamId], references: [id])
+  aboutUsTeamId String?
+
+  space          AboutUsSpace? @relation(fields: [aboutUsSpaceId], references: [id])
+  aboutUsSpaceId String?
+
+  values AboutUsValues[]
+
+  directors AboutUsDirectors[]
+}
+
+model PrivacyPolicy {
+  id     String  @id @default(uuid())
+  title  String
+  text   String
+  enable Boolean @default(true)
+}
+
+model Contact {
+  id   String @id @default(uuid())
+  link String
+}
+
+model Users {
+  id       String @unique
+  email    String @unique
+  userName String
+}
+
+model ContactEmail {
+  id    String @id @default(uuid())
+  email String
+}
+
+model Logos {
+  id          String @id @default(uuid())
+  logoColorId String
+  logoColor   String
+  logoWhiteId String
+  logoWhite   String
+}
+
+model Catalog {
+  id       String @id @default(uuid())
+  link     String
+  fileName String
+}

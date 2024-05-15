@@ -1,0 +1,35 @@
+{
+  "name": "medicall-farma-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "clean": "rm -rf node_modules/.cache",
+    "build": "npm run clean && tsc",
+    "deploy": "npm i && npm run build && gcloud app deploy",
+    "gcloud:project": "gcloud config set project medicall-farma"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@fastify/multipart": "^8.2.0",
+    "@google-cloud/storage": "^7.10.0",
+    "@prisma/client": "^5.12.1",
+    "fastify": "^4.26.2",
+    "firebase-admin": "^12.1.0",
+    "resend": "^3.2.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.5",
+    "prisma": "^5.12.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.4"
+  }
+}
