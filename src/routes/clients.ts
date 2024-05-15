@@ -5,7 +5,11 @@ import { AuthTokenVerify } from "../utils/authTokenVerify";
 
 export default async function Clients (app: FastifyInstance) {
   app.get('/clients', async () => {
-    const clients = await prisma.clients.findMany()
+    const clients = await prisma.clients.findMany({
+      orderBy: {
+        index: 'asc'
+      }
+    })
 
     return clients
   })
@@ -13,7 +17,8 @@ export default async function Clients (app: FastifyInstance) {
   app.post('/add-client', async (request, reply) => {
     const bodySchema = z.object({
       image: z.string(),
-      name: z.string()
+      name: z.string(),
+      index: z.number()
     })
 
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -22,12 +27,13 @@ export default async function Clients (app: FastifyInstance) {
       return null
     }
 
-    const { image, name } = bodySchema.parse(request.body)
+    const { image, name, index } = bodySchema.parse(request.body)
 
     const client = await prisma.clients.create({
       data: {
         image,
-        name
+        name,
+        index
       }
     })
 
@@ -63,7 +69,8 @@ export default async function Clients (app: FastifyInstance) {
 
     const bodySchema = z.object({
       image: z.string(),
-      name: z.string()
+      name: z.string(),
+      index: z.number()
     })
 
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -74,7 +81,48 @@ export default async function Clients (app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
-    const { image, name } = bodySchema.parse(request.body)
+    const { image, name, index } = bodySchema.parse(request.body)
+
+    const allClients = await prisma.clients.findMany({
+      orderBy: {
+        index: 'asc'
+      }
+    })
+
+    async function reorderList(
+      list: {
+        id: string,
+        image: string,
+        index?: number | null,
+        name: string
+      }[],
+      fromIndex: number,
+      toIndex: number
+    ) {
+
+      // Verifica se os índices são válidos
+      if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex > list.length) {
+        console.error("Índices fora do intervalo da lista");
+        return list;
+      }
+
+      const [ removed ] = list.splice(fromIndex, 1)
+      list.splice(toIndex, 0, removed)
+
+      list.forEach((obj, ind) => {
+        obj.index = ind
+      })
+
+      await prisma.clients.deleteMany()
+
+      await prisma.clients.createMany({
+        data: list
+      })
+    }
+
+    const fromIndex = allClients.findIndex((e) => e.id === id)
+
+    await reorderList(allClients, fromIndex, index)
 
     const clients = await prisma.clients.update({
       where: {

@@ -11,17 +11,20 @@ export default async function Suppliers (app: FastifyInstance) {
   })
 
   app.get('/suppliers', async () => {
-    const suppliers = await prisma.suppliers.findMany()
-
-    const sort = suppliers.sort((a, b) => Number(a.index) > Number(b.index) ? 1 : -1)
+    const suppliers = await prisma.suppliers.findMany({
+      orderBy: {
+        index: "asc"
+      }
+    })
     
-    return sort || []
+    return suppliers || []
   })
   
   app.post('/add-suppliers', async (request, reply) => {
     const bodySchema = z.object({
       image: z.string(),
-      name: z.string()
+      name: z.string(),
+      index: z.number()
     })
     
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -30,12 +33,13 @@ export default async function Suppliers (app: FastifyInstance) {
       return null
     }
     
-    const { image, name } = bodySchema.parse(request.body)
+    const { image, name, index } = bodySchema.parse(request.body)
 
     const suppliers = await prisma.suppliers.create({
       data: {
         image,
-        name
+        name,
+        index
       }
     })
 
@@ -85,7 +89,11 @@ export default async function Suppliers (app: FastifyInstance) {
 
     const { image, name, index } = bodySchema.parse(request.body)
 
-    const allSuppliers = await prisma.suppliers.findMany()
+    const allSuppliers = await prisma.suppliers.findMany({
+      orderBy: {
+        index: 'asc'
+      }
+    })
 
     async function reorderList(
       list: {
@@ -97,41 +105,30 @@ export default async function Suppliers (app: FastifyInstance) {
       fromIndex: number,
       toIndex: number
     ) {
+
       // Verifica se os índices são válidos
       if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex > list.length) {
-          console.error("Índices fora do intervalo da lista");
-          return list;
+        console.error("Índices fora do intervalo da lista");
+        return list;
       }
-  
-      // Remove o item do índice original
-      const [item] = list.splice(fromIndex , 1);
-  
-      // Insere o item no novo índice
-      list.splice(toIndex - 1, 0, item);
-      
-      list.forEach((obj, idx) => {
-        obj.index = idx + 1
-      });
-      
-      await list.forEach(async (obj) => {
-        await prisma.suppliers.update({
-          where: {
-            id: obj.id
-          },
-          data: obj
-        })
+
+      const [ removed ] = list.splice(fromIndex, 1)
+      list.splice(toIndex, 0, removed)
+
+      list.forEach((obj, ind) => {
+        obj.index = ind
       })
 
-      return list
+      await prisma.suppliers.deleteMany()
+
+      await prisma.suppliers.createMany({
+        data: list
+      })
     }
 
-    const fromIndex = allSuppliers.find((e) => e.id === id)
+    const fromIndex = allSuppliers.findIndex((e) => e.id === id)
 
-    if(!fromIndex?.index) {
-      return null
-    }
-
-    reorderList(allSuppliers, fromIndex?.index, index)
+    await reorderList(allSuppliers, fromIndex, index)
 
     const suppliers = await prisma.suppliers.update({
       where: {
@@ -140,7 +137,6 @@ export default async function Suppliers (app: FastifyInstance) {
       data: {
         name,
         image,
-        index
       }
     })
 
@@ -184,5 +180,56 @@ export default async function Suppliers (app: FastifyInstance) {
       })
 
     return suppliers
+  })
+  
+  let listTeste = [
+    {
+      index: 0,
+      name: '1',
+    },
+    {
+      index: 1,
+      name: '2',
+    },
+    {
+      index: 2,
+      name: '3',
+    },
+    {
+      index: 3,
+      name: '4',
+    },
+    {
+      index: 4,
+      name: '5',
+    }
+  ]  
+
+  app.post('/edit-suppliers', async (request) => {
+    const bodySchema = z.object({
+      name: z.string(),
+      index: z.number()
+    })
+
+    const { index, name } = bodySchema.parse(request.body)
+
+    function teste (list: {
+      index: number,
+      name: string
+    }[], fromIndex: number, toIndex: number) {
+
+      const [ removed ] = list.splice(fromIndex, 1)
+      list.splice(toIndex, 0, removed)
+
+      list.forEach((obj, ind) => {
+        obj.index = ind
+      })
+
+      console.log(list)
+    }
+
+    const fromIndex = listTeste.findIndex((e) => e.name === name)
+
+    teste(listTeste, fromIndex, index)
   })
 }
