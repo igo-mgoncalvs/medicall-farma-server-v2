@@ -8,6 +8,11 @@ export default async function Products(app: FastifyInstance) {
     const productsGroups = await prisma.productsGroups.findMany({
       include: {
         products_list: true
+      },
+      orderBy: {
+        products_list: {
+          _count: "desc"
+        }
       }
     })
 
@@ -91,7 +96,7 @@ export default async function Products(app: FastifyInstance) {
       description: z.string(),
       whatsapp: z.string(),
       imageId: z.string(),
-      summary: z.string()
+      summary: z.string(),
     })
 
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -122,6 +127,37 @@ export default async function Products(app: FastifyInstance) {
     })
 
     return product
+  })
+
+  app.put('/change-product-status/:id', async (request, reply) => {
+    const paramsSchema = z.object({
+      id: z.string()
+    })
+
+    const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
+
+    if(auth === 'error') {
+      return null
+    }
+
+    const { id } = paramsSchema.parse(request.params)
+
+    const findStatus = await prisma.product.findUniqueOrThrow({
+      where: {
+        id
+      }
+    })
+
+    const change = await prisma.product.update({
+      where: {
+        id
+      },
+      data: {
+        active: !findStatus?.active
+      }
+    })
+
+    return change
   })
 
   app.delete('/remove-product/:id', async (request, reply) => {

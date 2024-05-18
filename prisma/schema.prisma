@@ -26,6 +26,7 @@ model Product {
   summary          String
   whatsapp         String
   description      String
+  active           Boolean         @default(true)
   ProductsGroups   ProductsGroups? @relation(fields: [productsGroupsId], references: [id])
   productsGroupsId String?
 }
