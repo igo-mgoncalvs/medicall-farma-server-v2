@@ -13,11 +13,14 @@ datasource db {
 model ProductsGroups {
   id            String    @id @default(uuid())
   group_name    String
+  active        Boolean   @default(true)
+  index         Int?
   products_list Product[]
 }
 
 model Product {
   id               String          @id @default(uuid())
+  index            Int?
   image            String
   imageId          String
   route            String          @unique

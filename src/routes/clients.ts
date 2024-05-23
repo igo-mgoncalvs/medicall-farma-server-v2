@@ -150,17 +150,45 @@ export default async function Clients (app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
-    const clients = prisma.clients.delete({
+    const clients = await prisma.clients.delete({
       where: {
         id
       }
     })
 
+    const allClients = await prisma.clients.findMany()
+
+    async function reorderItens(
+      list: {
+        id: string,
+        image: string,
+        index?: number | null,
+        name: string
+      }[],
+    ) {
+
+      list.forEach(async (obj, ind) => {
+        obj.index = ind
+
+        await prisma.clients.update({
+          where: {
+            id: obj.id
+          },
+          data: {
+            ...obj,
+            index: ind
+          }
+        })
+      })
+    }
+
+    await reorderItens(allClients)
+
     return clients
   })
 
-  app.delete('/remove-all-clients', async (request, reply) => {
 
+  app.delete('/remove-all-clients', async (request, reply) => {
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
 
     if(auth === 'error') {

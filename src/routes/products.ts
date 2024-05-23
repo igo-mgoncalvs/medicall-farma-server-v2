@@ -7,13 +7,12 @@ export default async function Products(app: FastifyInstance) {
   app.get('/products', async () => {
     const productsGroups = await prisma.productsGroups.findMany({
       include: {
-        products_list: true
-      },
-      orderBy: {
         products_list: {
-          _count: "desc"
+          orderBy: {
+            index: 'asc'
+          }
         }
-      }
+      },
     })
 
     return productsGroups
@@ -29,7 +28,8 @@ export default async function Products(app: FastifyInstance) {
       description: z.string(),
       whatsapp: z.string(),
       imageId: z.string(),
-      summary: z.string()
+      summary: z.string(),
+      index: z.number()
     })
 
     const idToken = request.headers.authorization?.replace('Bearer ', '')
@@ -47,7 +47,7 @@ export default async function Products(app: FastifyInstance) {
       return null
     }
 
-    const { description, image, route, name, link, productsGroupsId, whatsapp, imageId, summary } = bodySchema.parse(request.body)
+    const { description, image, route, name, link, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
 
     const product = await prisma.product.create({
       data: {
@@ -59,7 +59,8 @@ export default async function Products(app: FastifyInstance) {
         route,
         summary,
         whatsapp,
-        productsGroupsId
+        productsGroupsId,
+        index
       }
     })
 
@@ -97,6 +98,7 @@ export default async function Products(app: FastifyInstance) {
       whatsapp: z.string(),
       imageId: z.string(),
       summary: z.string(),
+      index: z.number()
     })
 
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -107,7 +109,62 @@ export default async function Products(app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
-    const { description, image, name, link, route, productsGroupsId, whatsapp, imageId, summary } = bodySchema.parse(request.body)
+    const { description, image, name, link, route, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
+
+    const findGroup = await prisma.product.findUniqueOrThrow({
+      where: {
+        id
+      }
+    })
+
+    const allProducts = await prisma.product.findMany({
+      where: {
+        productsGroupsId: findGroup.productsGroupsId
+      },
+      orderBy: {
+        index: 'asc'
+      }
+    })
+
+    async function reorderList(
+      list: {
+        id: string,
+        image: string,
+        index?: number | null,
+        name: string
+      }[],
+      fromIndex: number,
+      toIndex: number
+    ) {
+
+      // Verifica se os índices são válidos
+      if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex > list.length) {
+        console.error("Índices fora do intervalo da lista");
+        return list;
+      }
+
+      const [ removed ] = list.splice(fromIndex, 1)
+      list.splice(toIndex, 0, removed)
+
+      return list.forEach(async (obj, ind) => {
+        obj.index = ind
+
+        await prisma.product.update({
+          where: {
+            id: obj.id
+          },
+          data: {
+            ...obj,
+            index: ind
+          }
+        })
+
+      })
+    }
+
+    const fromIndex = allProducts.findIndex((e) => e.id === id)
+
+    await reorderList(allProducts, fromIndex, index)
 
     const product = await prisma.product.update({
       where: {
@@ -173,11 +230,49 @@ export default async function Products(app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
+    const findGroup = await prisma.product.findUniqueOrThrow({
+      where: {
+        id
+      }
+    })
+
     const product = await prisma.product.delete({
       where: {
         id
       }
     })
+
+    const allSuppliers = await prisma.product.findMany({
+      where: {
+        productsGroupsId: findGroup.productsGroupsId
+      }
+    })
+
+    async function reorderItens(
+      list: {
+        id: string,
+        image: string,
+        index?: number | null,
+        name: string
+      }[],
+    ) {
+
+      list.forEach(async (obj, ind) => {
+        obj.index = ind
+
+        await prisma.product.update({
+          where: {
+            id: obj.id
+          },
+          data: {
+            ...obj,
+            index: ind
+          }
+        })
+      })
+    }
+
+    await reorderItens(allSuppliers)
 
     return product
   })

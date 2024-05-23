@@ -161,6 +161,34 @@ export default async function Suppliers (app: FastifyInstance) {
       }
     })
 
+    const allSuppliers = await prisma.suppliers.findMany()
+
+    async function reorderItens(
+      list: {
+        id: string,
+        image: string,
+        index?: number | null,
+        name: string
+      }[],
+    ) {
+
+      list.forEach(async (obj, ind) => {
+        obj.index = ind
+
+        await prisma.suppliers.update({
+          where: {
+            id: obj.id
+          },
+          data: {
+            ...obj,
+            index: ind
+          }
+        })
+      })
+    }
+
+    await reorderItens(allSuppliers)
+
     return suppliers 
   })
 
