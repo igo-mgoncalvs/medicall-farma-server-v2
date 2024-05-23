@@ -13,6 +13,9 @@ export default async function Products(app: FastifyInstance) {
           }
         }
       },
+      orderBy: {
+        index: "asc"
+      }
     })
 
     return productsGroups

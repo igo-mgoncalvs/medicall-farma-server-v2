@@ -9,7 +9,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "clean": "rm -rf node_modules/.cache",
-    "build": "npm run clean && tsc",
+    "build": "tsc",
     "deploy": "npm i && npm run build && gcloud app deploy",
     "gcloud:project": "gcloud config set project medicall-farma"
   },
