@@ -101,6 +101,7 @@ export default async function Products(app: FastifyInstance) {
       whatsapp: z.string(),
       imageId: z.string(),
       summary: z.string(),
+      index: z.number()
     })
 
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -111,7 +112,7 @@ export default async function Products(app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
-    const { description, image, name, link, route, productsGroupsId, whatsapp, imageId, summary } = bodySchema.parse(request.body)
+    const { description, image, name, link, route, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
 
     const product = await prisma.product.update({
       where: {
@@ -127,6 +128,7 @@ export default async function Products(app: FastifyInstance) {
         whatsapp,
         imageId,
         summary,
+        index
       }
     })
 
