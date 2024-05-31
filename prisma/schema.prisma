@@ -25,6 +25,7 @@ model Product {
   imageId          String
   route            String          @unique
   name             String
+  subTitle         String?
   link             String
   summary          String
   whatsapp         String

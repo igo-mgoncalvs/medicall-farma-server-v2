@@ -76,7 +76,6 @@ export default async function Suppliers (app: FastifyInstance) {
     const bodySchema = z.object({
       image: z.string(),
       name: z.string(),
-      index: z.number()
     })
 
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -87,48 +86,7 @@ export default async function Suppliers (app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
-    const { image, name, index } = bodySchema.parse(request.body)
-
-    const allSuppliers = await prisma.suppliers.findMany({
-      orderBy: {
-        index: 'asc'
-      }
-    })
-
-    async function reorderList(
-      list: {
-        id: string,
-        image: string,
-        index?: number | null,
-        name: string
-      }[],
-      fromIndex: number,
-      toIndex: number
-    ) {
-
-      // Verifica se os índices são válidos
-      if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex > list.length) {
-        console.error("Índices fora do intervalo da lista");
-        return list;
-      }
-
-      const [ removed ] = list.splice(fromIndex, 1)
-      list.splice(toIndex, 0, removed)
-
-      list.forEach((obj, ind) => {
-        obj.index = ind
-      })
-
-      await prisma.suppliers.deleteMany()
-
-      await prisma.suppliers.createMany({
-        data: list
-      })
-    }
-
-    const fromIndex = allSuppliers.findIndex((e) => e.id === id)
-
-    await reorderList(allSuppliers, fromIndex, index)
+    const { image, name } = bodySchema.parse(request.body)
 
     const suppliers = await prisma.suppliers.update({
       where: {
@@ -141,6 +99,33 @@ export default async function Suppliers (app: FastifyInstance) {
     })
 
     return suppliers
+  })
+
+  app.put('/reorder-suppliers', async (request, reply) => {
+    const bodySchema = z.object({
+      id: z.string(),
+      index: z.number()
+    }).array()
+
+    const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
+
+    if(auth === 'error') {
+      return null
+    }
+
+    const suppliersList = bodySchema.parse(request.body)
+
+    return suppliersList.forEach(async (item) => {
+      return await prisma.suppliers.update({
+        where: {
+          id: item.id
+        },
+        data: {
+          index: item.index
+        }
+      })
+    })
+
   })
 
   app.delete('/remove-supplier/:id', async (request, reply) => {

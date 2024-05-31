@@ -27,6 +27,7 @@ export default async function Products(app: FastifyInstance) {
       image: z.string(),
       route: z.string(),
       name: z.string(),
+      subTitle: z.string().optional(),
       link: z.string().optional(),
       description: z.string(),
       whatsapp: z.string(),
@@ -50,7 +51,7 @@ export default async function Products(app: FastifyInstance) {
       return null
     }
 
-    const { description, image, route, name, link, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
+    const { description, image, route, name, subTitle, link, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
 
     const product = await prisma.product.create({
       data: {
@@ -59,6 +60,7 @@ export default async function Products(app: FastifyInstance) {
         imageId,
         link: link || '',
         name,
+        subTitle,
         route,
         summary,
         whatsapp,
@@ -70,16 +72,16 @@ export default async function Products(app: FastifyInstance) {
     return product
   })
 
-  app.get('/find-product/:route', async (request) => {
+  app.get('/find-product/:id', async (request) => {
     const paramsSchema = z.object({
-      route: z.string()
+      id: z.string()
     })
 
-    const { route } = paramsSchema.parse(request.params)
+    const { id } = paramsSchema.parse(request.params)
 
     const product = await prisma.product.findUniqueOrThrow({
       where: {
-        route
+        id
       }
     })
 
@@ -96,6 +98,7 @@ export default async function Products(app: FastifyInstance) {
       image: z.string(),
       route: z.string(),
       name: z.string(),
+      subTitle: z.string().optional(),
       link: z.string().optional(),
       description: z.string(),
       whatsapp: z.string(),
@@ -112,7 +115,7 @@ export default async function Products(app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
-    const { description, image, name, link, route, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
+    const { description, image, name, subTitle, link, route, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
 
     const product = await prisma.product.update({
       where: {
@@ -123,6 +126,7 @@ export default async function Products(app: FastifyInstance) {
         image, 
         link: link || '',
         name,
+        subTitle,
         route,
         productsGroupsId,
         whatsapp,
@@ -149,8 +153,8 @@ export default async function Products(app: FastifyInstance) {
 
     const productsList = bodySchema.parse(request.body)
 
-    productsList.forEach(async (item) => {
-      await prisma.product.update({
+    return productsList.forEach(async (item) => {
+      return await prisma.product.update({
         where: {
           id: item.id
         },

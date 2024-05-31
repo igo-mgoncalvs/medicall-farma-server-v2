@@ -70,7 +70,6 @@ export default async function Groups(app: FastifyInstance) {
 
     const bodySchema = z.object({
       group_name: z.string(),
-      index: z.number()
     })
 
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -81,52 +80,7 @@ export default async function Groups(app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
-    const { group_name, index } = bodySchema.parse(request.body)
-
-    const allGroups = await prisma.productsGroups.findMany({
-      orderBy: {
-        index: 'asc'
-      }
-    })
-
-    async function reorderList(
-      list: {
-        id: string,
-        group_name: string,
-        index?: number | null,
-      }[],
-      fromIndex: number,
-      toIndex: number
-    ) {
-
-      // Verifica se os índices são válidos
-      if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex > list.length) {
-        console.error("Índices fora do intervalo da lista");
-        return list;
-      }
-
-      const [ removed ] = list.splice(fromIndex, 1)
-      list.splice(toIndex, 0, removed)
-
-      return list.forEach(async (obj, ind) => {
-        obj.index = ind
-
-        await prisma.productsGroups.update({
-          where: {
-            id: obj.id
-          },
-          data: {
-            ...obj,
-            index: ind
-          }
-        })
-
-      })
-    }
-
-    const fromIndex = allGroups.findIndex((e) => e.id === id)
-
-    await reorderList(allGroups, fromIndex, index)
+    const { group_name } = bodySchema.parse(request.body)
     
     const group = prisma.productsGroups.update({
       where: {
@@ -139,6 +93,33 @@ export default async function Groups(app: FastifyInstance) {
 
     return group
   })
+
+  app.put('/reorder-groups', async (request, reply) => {
+    const bodySchema = z.object({
+      id: z.string(),
+      index: z.number()
+    }).array()
+
+    const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
+
+    if(auth === 'error') {
+      return null
+    }
+
+    const groupsList = bodySchema.parse(request.body)
+
+    return groupsList.forEach(async (item) => {
+      return await prisma.productsGroups.update({
+        where: {
+          id: item.id
+        },
+        data: {
+          index: item.index
+        }
+      })
+    })
+  })
+
 
   app.put('/change-group-status/:id', async (request, reply) => {
     const paramsSchema = z.object({
