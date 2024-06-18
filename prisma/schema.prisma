@@ -90,6 +90,7 @@ model CatalogMain {
 model HomeProductsList {
   id             String        @id @default(uuid())
   name           String
+  index          Int?
   HomeProducts   HomeProducts? @relation(fields: [homeProductsId], references: [id])
   homeProductsId String?
 }
@@ -185,6 +186,7 @@ model AboutUsValues {
   id      String  @id @default(uuid())
   image   String
   imageId String
+  index   Int?
   title   String
   text    String
   enable  Boolean @default(true)

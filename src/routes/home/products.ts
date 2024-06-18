@@ -2,10 +2,15 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma'
 import z from 'zod'
 import { randomUUID } from 'crypto'
+import { AuthTokenVerify } from '../../utils/authTokenVerify'
 
 export default async function HomeProducts (app: FastifyInstance) {
   app.get('/home-products-list', async () => {
-    const products = await prisma.homeProductsList.findMany()
+    const products = await prisma.homeProductsList.findMany({
+      orderBy: {
+        index: "asc"
+      }
+    })
 
     return products
   })
@@ -65,6 +70,33 @@ export default async function HomeProducts (app: FastifyInstance) {
     })
 
     return products
+  })
+
+  app.put('/reorder-products-home', async (request, reply) => {
+    const bodySchema = z.object({
+      id: z.string(),
+      index: z.number()
+    }).array()
+
+    const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
+
+    if(auth === 'error') {
+      return null
+    }
+
+    const productsList = bodySchema.parse(request.body)
+
+    return productsList.forEach(async (item) => {
+      return await prisma.homeProductsList.update({
+        where: {
+          id: item.id
+        },
+        data: {
+          index: item.index
+        }
+      })
+    })
+
   })
 
   app.delete('/delete-home-products-list/:id', async (request, reply) => {

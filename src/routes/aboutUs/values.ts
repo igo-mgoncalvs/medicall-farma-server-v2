@@ -6,7 +6,11 @@ import { AuthTokenVerify } from "../../utils/authTokenVerify";
 
 export default async function AboutUsValues (app: FastifyInstance) {
   app.get('/about-us-values', async () => {
-    const values = await prisma.aboutUsValues.findMany()
+    const values = await prisma.aboutUsValues.findMany({
+      orderBy: {
+        index: "asc"
+      }
+    })
 
     return values || []
   })
@@ -91,6 +95,33 @@ export default async function AboutUsValues (app: FastifyInstance) {
     })
 
     return value
+  })
+
+  app.put('/reorder-values', async (request, reply) => {
+    const bodySchema = z.object({
+      id: z.string(),
+      index: z.number()
+    }).array()
+
+    const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
+
+    if(auth === 'error') {
+      return null
+    }
+
+    const productsList = bodySchema.parse(request.body)
+
+    return productsList.forEach(async (item) => {
+      return await prisma.aboutUsValues.update({
+        where: {
+          id: item.id
+        },
+        data: {
+          index: item.index
+        }
+      })
+    })
+
   })
 
   app.delete('/about-us-delete-value/:id', async (request, reply) => {
