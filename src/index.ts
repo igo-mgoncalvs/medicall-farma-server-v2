@@ -32,6 +32,7 @@ import ContactEmail from "./routes/contactEmail"
 import Catalog from "./routes/catalog"
 import Logos from "./routes/logos"
 import TokenVerify from "./routes/tokenVerify"
+import Category from "./routes/category"
 
 const serviceAccount = firebaseAccountCredentials  as admin.ServiceAccount
 
@@ -48,6 +49,7 @@ app.get('/', () => 'Server is running!')
 
 app.register(Products)
 app.register(Groups)
+app.register(Category)
 app.register(Suppliers)
 app.register(Clients)
 app.register(Home)

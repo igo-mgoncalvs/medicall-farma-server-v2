@@ -11,11 +11,22 @@ datasource db {
 }
 
 model ProductsGroups {
-  id            String    @id @default(uuid())
+  id            String     @id @default(uuid())
   group_name    String
-  active        Boolean   @default(true)
+  categories    Category[]
+  active        Boolean    @default(true)
   index         Int?
   products_list Product[]
+}
+
+model Category {
+  id               String         @unique
+  name             String         @unique
+  ProductsGroups   ProductsGroups @relation(fields: [productsGroupsId], references: [id])
+  productsGroupsId String
+  index            Int?
+  active           Boolean        @default(true)
+  Product          Product[]
 }
 
 model Product {
@@ -33,6 +44,9 @@ model Product {
   active           Boolean         @default(true)
   ProductsGroups   ProductsGroups? @relation(fields: [productsGroupsId], references: [id])
   productsGroupsId String?
+  categoryId       String?
+  category         Category?       @relation(fields: [categoryId], references: [id])
+  favorit          Boolean         @default(false)
 }
 
 model Suppliers {

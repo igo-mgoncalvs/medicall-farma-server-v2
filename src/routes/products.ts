@@ -8,6 +8,13 @@ export default async function Products(app: FastifyInstance) {
     const productsGroups = await prisma.productsGroups.findMany({
       include: {
         products_list: {
+          include: {
+            category: {
+              select: {
+                name: true
+              }
+            }
+          },
           orderBy: {
             index: 'asc'
           }
@@ -21,6 +28,71 @@ export default async function Products(app: FastifyInstance) {
     return productsGroups
   })
 
+  app.get('/all-products', async () => {
+    const productsGroups = await prisma.product.findMany({
+      include: {
+        category: true
+      },
+      orderBy: {
+        index: "asc"
+      }
+    })
+
+    return productsGroups
+  })
+
+  app.get('/find-products-by-category/:categoryId', async (request) => {
+    const paramsSchema = z.object({
+      categoryId: z.string()
+    })
+
+    const { categoryId } = paramsSchema.parse(request.params)
+
+    const productsGroups = await prisma.product.findMany({
+      include: {
+        category: true
+      },
+      orderBy: {
+        index: "asc"
+      },
+      where: {
+        categoryId
+      }
+    })
+
+    return productsGroups
+  })
+
+  app.get('/search-products', async (request) => {
+    const querySchema = z.object({
+      search: z.string()
+    })
+
+    const { search } = querySchema.parse(request.query)
+
+    const productsAll = await prisma.product.findMany()
+
+    const regex = new RegExp(search, 'i');
+
+    const products = productsAll.filter(product => regex.test(product.name))
+
+    return products
+  })
+
+  app.get('/get-favorites', async () => {
+    const productsGroups = await prisma.product.findMany({
+      orderBy: {
+        index: "asc"
+      },
+      where: {
+        favorit: true
+      }
+    })
+
+    return productsGroups
+  })
+
+
   app.post('/add-product', async (request, reply) => {
     const bodySchema = z.object({
       productsGroupsId: z.string(),
@@ -33,7 +105,9 @@ export default async function Products(app: FastifyInstance) {
       whatsapp: z.string(),
       imageId: z.string(),
       summary: z.string(),
-      index: z.number()
+      index: z.number(),
+      categoryId: z.string().optional(),
+      favorit: z.boolean()
     })
 
     const idToken = request.headers.authorization?.replace('Bearer ', '')
@@ -51,7 +125,7 @@ export default async function Products(app: FastifyInstance) {
       return null
     }
 
-    const { description, image, route, name, subTitle, link, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
+    const { description, image, route, name, subTitle, link, productsGroupsId, whatsapp, imageId, summary, index, categoryId, favorit } = bodySchema.parse(request.body)
 
     const product = await prisma.product.create({
       data: {
@@ -65,7 +139,9 @@ export default async function Products(app: FastifyInstance) {
         summary,
         whatsapp,
         productsGroupsId,
-        index
+        index,
+        categoryId,
+        favorit
       }
     })
 
@@ -104,7 +180,9 @@ export default async function Products(app: FastifyInstance) {
       whatsapp: z.string(),
       imageId: z.string(),
       summary: z.string(),
-      index: z.number()
+      index: z.number(),
+      categoryId: z.string(),
+      favorit: z.boolean()
     })
 
     const auth = await AuthTokenVerify({token: request.headers.authorization, reply})
@@ -115,7 +193,7 @@ export default async function Products(app: FastifyInstance) {
 
     const { id } = paramsSchema.parse(request.params)
 
-    const { description, image, name, subTitle, link, route, productsGroupsId, whatsapp, imageId, summary, index } = bodySchema.parse(request.body)
+    const { description, image, name, subTitle, link, route, productsGroupsId, whatsapp, imageId, summary, index, categoryId, favorit } = bodySchema.parse(request.body)
 
     const product = await prisma.product.update({
       where: {
@@ -132,7 +210,9 @@ export default async function Products(app: FastifyInstance) {
         whatsapp,
         imageId,
         summary,
-        index
+        index,
+        categoryId,
+        favorit
       }
     })
 
@@ -195,6 +275,31 @@ export default async function Products(app: FastifyInstance) {
     })
 
     return change
+  })
+
+  app.put('/favorite-product/:id', async (request, reply) => {
+    const paramsSchema = z.object({
+      id: z.string()
+    })
+
+    const { id } = paramsSchema.parse(request.params)
+
+    const findProduct = await prisma.product.findFirstOrThrow({
+      where: {
+        id
+      }
+    })
+
+    const product = await prisma.product.update({
+      where: {
+        id
+      },
+      data:{
+        favorit: !findProduct.favorit
+      }
+    })
+
+    return product
   })
 
   app.delete('/remove-product/:id', async (request, reply) => {

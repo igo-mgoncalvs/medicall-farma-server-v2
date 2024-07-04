@@ -6,8 +6,11 @@ import { AuthTokenVerify } from "../utils/authTokenVerify"
 export default async function Groups(app: FastifyInstance) {
   app.get('/groups', async () => {
     const productsGroups = await prisma.productsGroups.findMany({
+      include: {
+        categories: true
+      },
       orderBy: {
-        index: 'asc'
+        index: 'asc',
       }
     })
 
