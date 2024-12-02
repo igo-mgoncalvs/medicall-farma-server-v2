@@ -73,7 +73,7 @@ export default async function Category(app: FastifyInstance) {
         if(error.code === 'P2002'){
           reply.status(400).send({
             statusCode: 400,
-            message: 'A categoria já foi criada'
+            message: 'Essa categoria já foi criada'
           })
         }
       })

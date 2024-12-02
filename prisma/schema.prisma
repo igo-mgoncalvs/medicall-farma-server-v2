@@ -276,3 +276,25 @@ model Catalog {
   link     String
   fileName String
 }
+
+model ProductsPageImages {
+  id                     String  @id @default(uuid())
+  faviritFirst           String
+  faviritFirstId         String
+  faviritSecound         String
+  faviritSecoundId       String
+  faviritFirstMobile     String?
+  faviritFirstMobileId   String?
+  faviritSecoundMobile   String?
+  faviritSecoundMobileId String?
+  detailsFirst           String
+  detailsFirstId         String
+  detailsSecound         String
+  detailsSecoundId       String
+}
+
+model Address {
+  id      String @id @default(uuid())
+  address String
+  link    String
+}

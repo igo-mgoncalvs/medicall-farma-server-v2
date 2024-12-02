@@ -33,6 +33,8 @@ import Catalog from "./routes/catalog"
 import Logos from "./routes/logos"
 import TokenVerify from "./routes/tokenVerify"
 import Category from "./routes/category"
+import ProductsBanners from "./routes/productsBannes"
+import { Address } from "./routes/address"
 
 const serviceAccount = firebaseAccountCredentials  as admin.ServiceAccount
 
@@ -74,7 +76,9 @@ app.register(HomeProducts)
 app.register(ContactEmail)
 app.register(Catalog)
 app.register(Logos)
+app.register(ProductsBanners)
 app.register(TokenVerify)
+app.register(Address)
 
 app.register(cors, {
   origin: true,
